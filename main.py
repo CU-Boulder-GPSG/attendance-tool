@@ -1,20 +1,31 @@
 
 import pandas as pd
 import os
+import glob
 from datetime import datetime
 
-pathto_attendance = os.path.join('attendance_data', 'data.csv')
-pathto_role = os.path.join('role_information', 'roles.csv')
 
-
-def read_csv_wrapper(pathto_data, pathto_role):
-    # Import
-    df = pd.read_csv(pathto_data, header=1)
+def read_csv_wrapper(pathto_role):
+    # Import csv in folder
+    path = os.getcwd()
+    pathto_data = glob.glob(
+        os.path.join(
+            path,
+            'place_attendance_data',
+            '*.csv'
+        )
+    )
+    df = pd.read_csv(pathto_data[0], header=1)
     df = df.drop(0, axis=0)
 
     # Get Affiliation Information
     df_affil = pd.read_csv(pathto_role)
-    df = df.merge(df_affil, left_on='Please select your position:', right_on='Affiliation', how='left')
+    df = df.merge(
+        df_affil,
+        left_on='Please select your position:',
+        right_on='Affiliation',
+        how='left'
+    )
     return df
 
 
@@ -50,6 +61,18 @@ def get_minutes_table(meeting, df):
     return df_table
 
 
+def main():
+    # Local vars
+    pathto_role = os.path.join('role_information', 'roles.csv')
+
+    # Import data
+    df = read_csv_wrapper(pathto_role)
+
+    # Generate minutes table
+    date = '2022-01-26'
+    df_minutes = get_minutes_table('2022-01-26', df)
+    df_minutes.to_csv(date+'_minutes.csv', index=False)
+
+
 if __name__ == '__main__':
-    df = read_csv_wrapper(pathto_attendance, pathto_role)
-    get_minutes_table('2022-01-26', df).to_csv('Minutes Table From Qualtrics.csv', index=False)
+    main()
