@@ -132,4 +132,4 @@ dmypy.json
 .vscode
 
 # Project specfic
-/place_attendance_data/*
+/attendance_data/*
