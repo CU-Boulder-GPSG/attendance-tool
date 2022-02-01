@@ -6,16 +6,34 @@ from datetime import datetime
 
 
 def read_csv_wrapper(pathto_role):
+    """
+    Wrapper function to read csv files
+
+    Parameters
+    ----------
+    pathto_role : str
+        Path to role data
+
+    Returns
+    -------
+    df : DataFrame
+        Pandas DataFrame of attendance data for all dates
+    """
     # Import csv in folder
     path = os.getcwd()
     pathto_data = glob.glob(
         os.path.join(
             path,
-            'place_attendance_data',
+            'attendance_data',
             '*.csv'
         )
     )
-    df = pd.read_csv(pathto_data[0], header=1)
+    try:
+        df = pd.read_csv(pathto_data[0], header=1)
+    except IndexError:
+        raise TypeError(
+            'No csv files supplied in `attendance_data` folder'
+        )
     df = df.drop(0, axis=0)
 
     # Get Affiliation Information
@@ -30,34 +48,74 @@ def read_csv_wrapper(pathto_role):
 
 
 def get_minutes_table(meeting, df):
-    # Parse Dates
-    df['Start Date'] = df['Start Date'].apply(pd.to_datetime).apply(datetime.date)
+    """
+    Generate minutes table
+
+    Parameters
+    ----------
+    meeting : str
+        Data of meeting in format 'YYYY-MM-DD'
+    df : DataFrame
+        DataFrame from read_csv_wrapper function
+
+    Returns
+    -------
+    df_table : DataFrame
+        Minutes table
+    """
+    # Parse dates
+    df['Start Date'] = df['Start Date'].apply(
+        pd.to_datetime
+    ).apply(datetime.date)
     meeting = datetime.strptime(meeting, '%Y-%m-%d').date()
 
-    # Filter Dates
+    # Filter dates
     df = df[df['Start Date'] == meeting]
 
-    # Create Name (Affiliation) Column
-    cols = ['Please select yourself', 'Please select yourself.1',
-            'Please select yourself.2', 'Please select yourself.3',
-            'Please select yourself.4', 'Please select yourself.5',
-            'Please enter your full name:', 'Please enter your full name:.1',
-            'Name']
-    df[cols] = df.fillna('')[cols]
-    df['Name'] = df[cols].apply(lambda row: ''.join(row.values.astype(str)), axis=1)
-    cols = ['Please select your position:', 'Please Select Your Affiliation', 'Please enter your department and please add the corresponding four letter code\n\n(For example: Environmental Studies, ENVS)']
-    df[cols] = df[cols].fillna('')
-    df['Affiliation'] = df[cols].apply(lambda row: ''.join(row.values.astype(str)), axis=1)
+    # Combine senator, exec, and officer information
+    df = df.fillna('')
+    cols = [
+        'Please select yourself',
+        'Please select yourself.1',
+        'Please select yourself.2',
+        'Please select yourself.3',
+        'Please select yourself.4',
+        'Please select yourself.5',
+        'Please select yourself.6',
+        'Please enter your full name:',
+        'Please enter your full name:.1',
+        'Name'
+    ]
+    df['Name'] = df[cols].apply(
+        lambda row: ''.join(row.values.astype(str)),
+        axis=1
+    )
+
+    # Combine representative information
+    cols = [
+        'Please select your position:',
+        'Please Select Your Affiliation',
+        'Please enter your department and please add the corresponding four '
+        'letter code\n\n(For example: Environmental Studies, ENVS)'
+    ]
+    df['Affiliation'] = df[cols].apply(
+        lambda row: ''.join(row.values.astype(str)),
+        axis=1
+    )
+
+    # Combine senator and respresentative information
     df['Name (Affiliation)'] = df['Name'] + ' (' + df['Affiliation'] + ')'
 
-    # Create Minutes Table
+    # Create minutes table
     df_table = pd.DataFrame()
-    for i in df['Please select your GPSG Position'].unique():
-        ser = df[df['Please select your GPSG Position'] == i]['Name (Affiliation)']
+    position = 'Please select your GPSG Position'
+    for i in df[position].unique():
+        ser = df[df[position] == i]['Name (Affiliation)']
         ser = ser.reset_index(drop=True)
         ser.rename(i)
         df_table = pd.concat([df_table, ser], 1, ignore_index=True)
-    df_table.columns = df['Please select your GPSG Position'].unique()
+    df_table.columns = df[position].unique()
+
     return df_table
 
 
@@ -70,7 +128,7 @@ def main():
 
     # Generate minutes table
     date = '2022-01-26'
-    df_minutes = get_minutes_table('2022-01-26', df)
+    df_minutes = get_minutes_table(date, df)
     df_minutes.to_csv(date+'_minutes.csv', index=False)
 
 
