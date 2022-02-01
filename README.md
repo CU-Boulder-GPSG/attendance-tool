@@ -13,6 +13,7 @@ This tutorial assumes the use of [gitbash](https://git-scm.com/downloads) or a U
 6. Extract and copy the survey csv file into the `attendance_data` folder.
 7. Run the analysis by running `$python attendance.py --date YYYY-MM-DD`
     * For example a meeting happening November 1 2021 would be `$python attendance.py --date 2021-11-01`
+8. A minutes table will be generated in the directory with the name `YYYY-MM-DD_minutes.csv`
 
 # Contents
 ```
