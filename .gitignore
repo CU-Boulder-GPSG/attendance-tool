@@ -133,3 +133,4 @@ dmypy.json
 
 # Project specfic
 /attendance_data/*
+*.csv
