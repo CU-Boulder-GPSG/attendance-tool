@@ -1,8 +1,34 @@
 
 import pandas as pd
+import argparse
 import os
 import glob
 from datetime import datetime
+
+
+def input_parse():
+    """Parse command line inputs
+    Returns
+    -------
+    argparse_inputs: argparse.ArgumentParser
+        Parse command line arguments
+    """
+    # Create argument parser
+    argparse_inputs = argparse.ArgumentParser()
+
+    # Command line arguments
+    argparse_inputs.add_argument(
+        '--date',
+        type=str,
+        action='store',
+        help="Date of meeting in format 'YYYY-MM-DD'",
+        required=True
+    )
+
+    # Parse arguments
+    argparse_inputs = argparse_inputs.parse_args()
+
+    return argparse_inputs
 
 
 def read_csv_wrapper(pathto_role):
@@ -54,7 +80,7 @@ def get_minutes_table(meeting, df):
     Parameters
     ----------
     meeting : str
-        Data of meeting in format 'YYYY-MM-DD'
+        Date of meeting in format 'YYYY-MM-DD'
     df : DataFrame
         DataFrame from read_csv_wrapper function
 
@@ -113,7 +139,7 @@ def get_minutes_table(meeting, df):
         ser = df[df[position] == i]['Name (Affiliation)']
         ser = ser.reset_index(drop=True)
         ser.rename(i)
-        df_table = pd.concat([df_table, ser], 1, ignore_index=True)
+        df_table = pd.concat(objs=[df_table, ser], axis=1, ignore_index=True)
     df_table.columns = df[position].unique()
 
     return df_table
@@ -123,11 +149,14 @@ def main():
     # Local vars
     pathto_role = os.path.join('role_information', 'roles.csv')
 
+    # Parse arguments
+    clargs = input_parse()
+
     # Import data
     df = read_csv_wrapper(pathto_role)
 
     # Generate minutes table
-    date = '2022-01-26'
+    date = clargs.date
     df_minutes = get_minutes_table(date, df)
     df_minutes.to_csv(date+'_minutes.csv', index=False)
 
